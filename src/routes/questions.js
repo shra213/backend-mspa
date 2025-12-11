@@ -6,10 +6,61 @@ import { validateQuestion } from '../middlewares/validation.js';
 const router = express.Router();
 
 
-router.post('/', auth, requireTeacher, validateQuestion, async (req, res) => {
+import { upload } from '../middlewares/uploadMiddleware.js';
+
+// Middleware to parse options if they are strings (from FormData)
+const parseOptions = (req, res, next) => {
+    if (req.body.options && typeof req.body.options === 'string') {
+        try {
+            req.body.options = JSON.parse(req.body.options);
+        } catch (e) {
+            return res.status(400).json({ message: 'Invalid options format' });
+        }
+    }
+    next();
+};
+
+router.post('/', auth, requireTeacher, upload.any(), parseOptions, validateQuestion, async (req, res) => {
     try {
+
+        // Handle File Uploads
+        // req.files is an array of files. We need to map them to the correct fields.
+        // Frontend will send specific fieldnames: 'questionImage', 'optionResult_0', etc.
+
+        let questionImageUrl = '';
+        const files = req.files || [];
+
+        // Find question image
+        const questionFile = files.find(f => f.fieldname === 'questionImage');
+        if (questionFile) {
+            // Construct full URL (assuming server runs on same host/port for now, or relative path)
+            // Use relative path for flexibility, frontend can prepend base URL if needed.
+            // Or better: store full URL if we know the domain. For localhost:
+            const baseUrl = `${req.protocol}://${req.get('host')}`;
+            questionImageUrl = `${baseUrl}/uploads/${questionFile.filename}`;
+        }
+
+        // Map option images
+        if (req.body.options && Array.isArray(req.body.options)) {
+            req.body.options = req.body.options.map((opt, index) => {
+                const optionFile = files.find(f => f.fieldname === `optionImage_${index}`);
+                let optionImageUrl = opt.image || ''; // Keep existing if any?
+
+                if (optionFile) {
+                    const baseUrl = `${req.protocol}://${req.get('host')}`;
+                    optionImageUrl = `${baseUrl}/uploads/${optionFile.filename}`;
+                }
+
+                return {
+                    ...opt,
+                    image: optionImageUrl
+                };
+            });
+        }
+
         const question = new Question({
             ...req.body,
+            image: questionImageUrl || req.body.image, // Prefer uploaded file, fallback to body (if text)
             createdBy: req.user.id
         });
 

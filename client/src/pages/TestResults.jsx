@@ -52,6 +52,7 @@ export default function TestResults() {
                                         <th className="p-4 font-semibold text-gray-700">Percentage</th>
                                         <th className="p-4 font-semibold text-gray-700">Time Taken</th>
                                         <th className="p-4 font-semibold text-gray-700">Submitted At</th>
+                                        <th className="p-4 font-semibold text-gray-700">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -66,6 +67,11 @@ export default function TestResults() {
                                             </td>
                                             <td className="p-4 text-gray-500 text-sm">
                                                 {new Date(result.submittedAt || result.createdAt).toLocaleString()}
+                                            </td>
+                                            <td className="p-4">
+                                                <Link to={`/result/${result._id}`} className="text-blue-500 hover:text-blue-700 font-medium underline">
+                                                    View Details
+                                                </Link>
                                             </td>
                                         </tr>
                                     ))}

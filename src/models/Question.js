@@ -11,6 +11,10 @@ const questionSchema = new mongoose.Schema({
             type: String,
             required: true
         },
+        image: {
+            type: String,
+            trim: true
+        },
         isCorrect: {
             type: Boolean,
             default: false
@@ -23,12 +27,19 @@ const questionSchema = new mongoose.Schema({
     },
     correctAnswer: {
         type: String,
-        trim: true,
-        select: false 
+        trim: true
     },
     marks: {
         type: Number,
         default: 1
+    },
+    negativeMarks: {
+        type: Number,
+        default: 0
+    },
+    image: {
+        type: String,
+        trim: true
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,

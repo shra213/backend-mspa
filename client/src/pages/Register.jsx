@@ -11,15 +11,7 @@ export default function Register() {
     const navigate = useNavigate();
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        if (user) {
-            if (user.role === 'teacher') {
-                navigate(`/teacher/dashboard/${user.id}`);
-            } else {
-                navigate(`/student/dashboard/${user.id}`);
-            }
-        }
-    }, [user, navigate]);
+    // Redirect logic removed to allow access while logged in
 
     const handleSubmit = async (e) => {
         e.preventDefault();

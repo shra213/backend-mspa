@@ -16,6 +16,8 @@ export default function AddQuestions() {
     const [options, setOptions] = useState([{ text: '', isCorrect: false }, { text: '', isCorrect: false }]);
     const [correctAnswer, setCorrectAnswer] = useState('');
     const [marks, setMarks] = useState(1);
+    const [negativeMarks, setNegativeMarks] = useState(0);
+    const [questionImage, setQuestionImage] = useState(null); // File object
 
     useEffect(() => {
         fetchTest();
@@ -38,7 +40,7 @@ export default function AddQuestions() {
     };
 
     const addOption = () => {
-        setOptions([...options, { text: '', isCorrect: false }]);
+        setOptions([...options, { text: '', isCorrect: false, imageFile: null }]);
     };
 
     const removeOption = (index) => {
@@ -49,27 +51,37 @@ export default function AddQuestions() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const payload = {
-                questionText,
-                questionType,
-                marks,
-                testId // Pass testId if needed by backend to link immediately, 
-                // BUT current backend creates question first, then we need to link it to test.
-                // Wait, the backend `POST /questions` creates a question but doesn't link it to a test automatically?
-                // Let's check `tests.js` or `questions.js`.
-                // `POST /questions` just creates it.
-                // `PUT /tests/:id` can update questions array.
-                // So I need to: 1. Create Question, 2. Add Question ID to Test.
-            };
+            const formData = new FormData();
+            formData.append('questionText', questionText);
+            formData.append('questionType', questionType);
+            formData.append('marks', marks);
+            formData.append('negativeMarks', negativeMarks);
+            formData.append('testId', testId);
+
+            if (questionImage) {
+                formData.append('questionImage', questionImage);
+            }
 
             if (questionType === 'fill_in_blank') {
-                payload.correctAnswer = correctAnswer;
+                formData.append('correctAnswer', correctAnswer);
             } else {
-                payload.options = options;
+                // Prepare options for JSON and append files
+                const optionsData = options.map((opt, index) => {
+                    if (opt.imageFile) {
+                        formData.append(`optionImage_${index}`, opt.imageFile);
+                    }
+                    return {
+                        text: opt.text,
+                        isCorrect: opt.isCorrect
+                    };
+                });
+                formData.append('options', JSON.stringify(optionsData));
             }
 
             // 1. Create Question
-            const qRes = await api.post('/questions', payload);
+            const qRes = await api.post('/questions', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
             const newQuestionId = qRes.data._id;
 
             // 2. Update Test
@@ -78,7 +90,9 @@ export default function AddQuestions() {
 
             // Reset form
             setQuestionText('');
-            setOptions([{ text: '', isCorrect: false }, { text: '', isCorrect: false }]);
+            setQuestionImage(null);
+            setNegativeMarks(0);
+            setOptions([{ text: '', isCorrect: false, imageFile: null }, { text: '', isCorrect: false, imageFile: null }]);
             setCorrectAnswer('');
             fetchTest(); // Refresh list
         } catch (error) {
@@ -133,6 +147,17 @@ export default function AddQuestions() {
                             </div>
 
                             <div className="mb-4">
+                                <label className="block text-gray-700 mb-2">Question Image (Optional)</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="w-full p-2 border rounded"
+                                    onChange={(e) => setQuestionImage(e.target.files[0])}
+                                />
+                                {questionImage && <div className="mt-2 text-sm text-gray-600">Selected: {questionImage.name}</div>}
+                            </div>
+
+                            <div className="mb-4">
                                 <label className="block text-gray-700 mb-2">Type</label>
                                 <select
                                     className="w-full p-2 border rounded"
@@ -152,6 +177,18 @@ export default function AddQuestions() {
                                     value={marks}
                                     onChange={(e) => setMarks(e.target.value)}
                                     min="1"
+                                />
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="block text-gray-700 mb-2">Negative Marks (if incorrect)</label>
+                                <input
+                                    type="number"
+                                    className="w-full p-2 border rounded"
+                                    value={negativeMarks}
+                                    onChange={(e) => setNegativeMarks(e.target.value)}
+                                    min="0"
+                                    step="0.5"
                                 />
                             </div>
 
@@ -176,6 +213,12 @@ export default function AddQuestions() {
                                                 onChange={(e) => handleOptionChange(index, 'text', e.target.value)}
                                                 placeholder={`Option ${index + 1}`}
                                                 required
+                                            />
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="w-full p-2 border rounded text-sm"
+                                                onChange={(e) => handleOptionChange(index, 'imageFile', e.target.files[0])}
                                             />
                                             {options.length > 2 && (
                                                 <button type="button" onClick={() => removeOption(index)} className="text-red-500">X</button>
@@ -211,7 +254,8 @@ export default function AddQuestions() {
                             {questions.map((q, i) => (
                                 <div key={q._id} className="p-4 border rounded bg-gray-50">
                                     <p className="font-medium">Q{i + 1}: {q.questionText}</p>
-                                    <p className="text-sm text-gray-500 mt-1">Type: {q.questionType}</p>
+                                    {q.image && <img src={q.image} alt="Question" className="mt-2 h-24 object-contain" />}
+                                    <p className="text-sm text-gray-500 mt-1">Type: {q.questionType} | Marks: {q.marks} | Neg: {q.negativeMarks || 0}</p>
                                     {q.questionType === 'multiple_choice' && (
                                         <ul className="mt-2 text-sm ml-4 list-disc">
                                             {q.options.map((opt, j) => (

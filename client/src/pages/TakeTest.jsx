@@ -156,6 +156,7 @@ export default function TakeTest() {
                     {test.questions.map((q, i) => (
                         <div key={q._id} className="p-4 border rounded bg-gray-50">
                             <p className="font-medium text-lg mb-4">{i + 1}. {q.questionText}</p>
+                            {q.image && <img src={q.image} alt="Question" className="mb-4 max-h-64 object-contain" />}
 
                             {q.questionType === 'multiple_choice' ? (
                                 <div className="space-y-2">
@@ -168,7 +169,10 @@ export default function TakeTest() {
                                                 onChange={() => handleAnswerChange(q._id, j, 'multiple_choice')}
                                                 className="w-4 h-4"
                                             />
-                                            <span>{opt.text}</span>
+                                            <div>
+                                                <span>{opt.text}</span>
+                                                {opt.image && <img src={opt.image} alt="Option" className="mt-1 h-20 object-contain" />}
+                                            </div>
                                         </label>
                                     ))}
                                 </div>

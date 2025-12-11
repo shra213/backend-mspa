@@ -8,6 +8,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import TakeTest from './pages/TakeTest';
 import TestResults from './pages/TestResults';
 import { useAuth } from './context/AuthContext';
+import StudentResultDetail from './pages/StudentResultDetail';
 
 const PrivateRoute = ({ children, role }) => {
   const { user, loading } = useAuth();
@@ -51,6 +52,13 @@ function App() {
       <Route path="/test/:testId/results" element={
         <PrivateRoute role="teacher">
           <TestResults />
+        </PrivateRoute>
+      } />
+
+
+      <Route path="/result/:resultId" element={
+        <PrivateRoute role="teacher">
+          <StudentResultDetail />
         </PrivateRoute>
       } />
 

@@ -36,15 +36,15 @@ export const getActiveTests = async (req, res) => {
 
         // API is intended for students only. If not student, return empty.
         if (req.user.role !== 'student') {
-            console.log("Non-student role accessing getActiveTests. Returning empty.");
+
             return res.json([]);
         }
 
-        console.log("Enrolled Teachers:", req.user.enrolledTeachers);
+
         const enrolled = req.user.enrolledTeachers || [];
 
         if (enrolled.length === 0) {
-            console.log("No enrolled teachers. Returning empty.");
+
             return res.json([]);
         }
         query.createdBy = { $in: enrolled };
@@ -197,6 +197,11 @@ export const submitTest = async (req, res) => {
 
                 if (isCorrect) {
                     score += question.marks;
+                } else {
+                    // Apply negative marking
+                    if (question.negativeMarks) {
+                        score -= question.negativeMarks;
+                    }
                 }
 
                 return {

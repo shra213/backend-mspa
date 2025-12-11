@@ -38,6 +38,7 @@ app.use('/api/questions', questionRoutes);
 app.use('/api/tests', testRoutes);
 app.use('/api/results', resultRoutes);
 app.use('/api/users', userRoutes);
+app.use('/uploads', express.static('uploads'));
 
 
 io.on('connection', (socket) => {
