@@ -26,8 +26,7 @@ const io = new Server(server, {
 
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-    credentials: true
+    origin: "*",
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -39,7 +38,15 @@ app.use('/api/tests', testRoutes);
 app.use('/api/results', resultRoutes);
 app.use('/api/users', userRoutes);
 app.use('/uploads', express.static('uploads'));
+app.use((req, res, next) => {
+    console.log("REQ:", req.method, req.url, req.body);
+    next();
+});
 
+app.get("/test", (req, res) => {
+    console.log("HIT");
+    res.send("OK");
+});
 
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
